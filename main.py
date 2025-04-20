@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import math
+import numpy as np
 
 
 class ImagePGMHelper:
@@ -7,11 +8,12 @@ class ImagePGMHelper:
 
     def __init__(self, caminho_arquivo=None):
         """Criar os principais parâmetros da imagem"""
+        self.histogram = None
         self.num_linhas = None
         self.num_colunas = None
         self.L = None
         self.matriz = None
-
+        self.matriz_original = None
         if caminho_arquivo is not None:
             self.load(caminho_arquivo)
 
@@ -39,7 +41,7 @@ class ImagePGMHelper:
 
             # Lê valor máximo de cinza
             max_valor = int(ler_linha_valida().strip())
-            self.L = max_valor
+            self.L = max_valor + 1
 
             # Lê os dados de pixels
             if tipo == b'P2':
@@ -64,6 +66,7 @@ class ImagePGMHelper:
                 matriz.append(linha)
 
             self.matriz = matriz
+            self.matriz_original = matriz
             return matriz
 
     def show(self, name=None):
@@ -153,31 +156,107 @@ class ImagePGMHelper:
                 # APLICA O VALOR AJUSTADO NA MATRIZ
                 self.matriz[i][j] = self._adjust_final_value(s)
 
+    def get_histogram(self):
+        """calcula e retorna uma lista com o histograma da imagem."""
+        histogram = [0] * self.L
+        # INICIALIZA O HISTOGRAMA COM VALORES ZERADOS
+        for i in range(self.L):
+            histogram[i] = 0
+        # PERCORRE A IMAGEM PARA CONTAR AS CORES
+        for i in range(self.num_linhas):
+            for j in range(self.num_colunas):
+                r = self.matriz[i][j]
+                histogram[r] += 1
 
-imagem = ImagePGMHelper("einstein.pgm")
-print(imagem.L)
-print(imagem.num_linhas)
-print(imagem.num_colunas)
-imagem.show()
+        self.histogram = histogram
+        return histogram
 
-# imagem.load("einstein.pgm")
-# imagem.thresholding_transformation(k=126)
-# imagem.show()
+    def show_hist(self):
+        """Exibe o histograma"""
+        plt.stem(self.histogram)
+        plt.title("Histograma de Intensidades")
+        plt.xlabel("Nível de Cinza")
+        plt.ylabel("Frequência")
+        plt.grid(True)
+        plt.show()
 
-# imagem.load("einstein.pgm")
-# imagem.negative_transformation()
-# imagem.show()
+    def equalize(self):
+        """
+        Realiza a equalização da imagem a partir da CDF do histograma.
+        """
+        histogram = self.get_histogram()
+        cdf = [0] * len(histogram)
+        p_acumulada = 0.0
+        for i, value in enumerate(histogram):
+            p_acumulada += value / (self.num_linhas * self.num_colunas)
+            cdf[i] = p_acumulada
 
-# c_values = [40]
-# for c_value in c_values:
-#     imagem.load("einstein.pgm")
-#     imagem.log_transformation(c=c_value)
-#     imagem.show(name=f"log c={c_value}")
+        # plt.plot(range(len(cdf)), cdf, marker='o', linestyle='-')
+        # plt.title("Função de Distribuição Acumulada (CDF)")
+        # plt.xlabel("Valor")
+        # plt.ylabel("Probabilidade acumulada")
+        # plt.grid(True)
+        # plt.show()
 
-gammas = [0.85, 1 , 1.1]
-for gamma in gammas:
-    imagem.load("einstein.pgm")
-    imagem.gamma_transformation(y=gamma)
-    imagem.show(name=f"gamma y={gamma}")
+        # CONSTROI UM VETOR PARA O MAPEAMENTO DO HISTOGRAMA
+        transition_table = [0] * len(histogram)
+        for i in range(len(histogram)):
+            transition_table[i] = self._adjust_final_value((self.L-1) * cdf[i])
+            pass
+        print(transition_table)
+
+        # MONTA O NOVO HISTOGRAMA A PARTIR DO MAPEAMENTO
+        new_hitogram = [0]*len(histogram)
+        for i, value in enumerate(histogram):
+            new_hitogram[transition_table[i]] += value
+
+        self.histogram = new_hitogram
+
+        # APLICA O NOVO HISTOGRAMA NA MATRIZ DE INTENSIDADES
+        for i in range(self.num_linhas):
+            for j in range(self.num_colunas):
+                r = self.matriz[i][j]
+                # APLICA A TRANSFORMACAO
+                s = transition_table[r]
+                # APLICA O VALOR AJUSTADO NA MATRIZ
+                self.matriz[i][j] = self._adjust_final_value(s)
+        pass
+
+
+if __name__ == "__main__":
+    # imagem = ImagePGMHelper("einstein.pgm")
+    imagem = ImagePGMHelper("relogio.pgm")
+    print(imagem.L)
+    print(imagem.num_linhas)
+    print(imagem.num_colunas)
+    imagem.show()
+
+    # imagem.load("einstein.pgm")
+    # imagem.thresholding_transformation(k=126)
+    # imagem.show()
+
+    # imagem.load("einstein.pgm")
+    # imagem.negative_transformation()
+    # imagem.show()
+
+    # c_values = [40]
+    # for c_value in c_values:
+    #     imagem.load("einstein.pgm")
+    #     imagem.log_transformation(c=c_value)
+    #     imagem.show(name=f"log c={c_value}")
+
+    # gammas = [0.85, 1.1]
+    # for gamma in gammas:
+    #     imagem.load("einstein.pgm")
+    #     imagem.gamma_transformation(y=gamma)
+    #     imagem.show(name=f"gamma y={gamma}")
+    #     imagem.get_histogram()
+
+    imagem.get_histogram()
+    imagem.show_hist()
+    imagem.equalize()
+    imagem.show_hist()
+    imagem.show()
+
 
 
