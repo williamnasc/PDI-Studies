@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import math
 
 
 class ImagePGMHelper:
@@ -65,11 +66,92 @@ class ImagePGMHelper:
             self.matriz = matriz
             return matriz
 
-    def show(self):
+    def show(self, name=None):
         plt.imshow(self.matriz, cmap='gray', vmin=0, vmax=self.L)
         plt.axis('off')  # remove eixos
+        if name is not None:
+            plt.title(name)
         plt.show()
         pass
+
+    def thresholding_transformation(self, k):
+        """faz a foto ter apenas os preto (0) e brando (L-1)
+        para os pontos que estao a baixo ou acima do k"""
+
+        for i in range(self.num_linhas):
+            for j in range(self.num_colunas):
+                r = self.matriz[i][j]
+                if r <= k:
+                    self.matriz[i][j] = 0
+                else:
+                    self.matriz[i][j] = self.L - 1
+        pass
+
+    def negative_transformation(self):
+        """
+        Inverte os niveis de cinza da imagem.
+        fazendo
+            s = L - 1 - r
+        """
+        for i in range(self.num_linhas):
+            for j in range(self.num_colunas):
+                r = self.matriz[i][j]
+                self.matriz[i][j] = self.L - 1 - r
+        pass
+
+    def log_transformation(self, c=1.0):
+        """
+        Transformação logaritmica na sua forma geral.
+        fazendo
+            s = c*log(1+r)
+        onde
+            c é a constante de transformação de modo que:
+                c > 0 : deixa imagem mais clara
+                c < 0 : deixa imagem mais escura
+        :param c: constante de transformação
+        """
+        for i in range(self.num_linhas):
+            for j in range(self.num_colunas):
+                r = self.matriz[i][j]
+                # APLICA A TRANSFORMACAO
+                s = (math.log(1 + r)) * c
+                print(f"({i},{j}) r = {r} -> s = {s}")
+                # APLICA O VALOR AJUSTADO NA MATRIZ
+                self.matriz[i][j] = self._adjust_final_value(s)
+        pass
+
+    def _adjust_final_value(self, s):
+        """Arredonda o valor para o inteiro superior e satura se passar do L maximo."""
+        s = math.ceil(s)
+        if s > (self.L - 1):
+            s = self.L - 1
+        return s
+
+    def gamma_transformation(self, c=1.0, y=1.0):
+        """
+        Power-Law (Gamma) Transformations
+        Uma transformação exponencial
+        fazendo
+            s = c * r^y
+        onde
+            c é constante de transformação
+                c > 0 : deixa imagem mais clara
+                c < 0 : deixa imagem mais escura
+            y é constante exponencial
+                se (c = 1)
+                y < 1 : deixa imagem mais clara
+                y = 1 : deixa a transformacao linear
+                y > 1 : deixa imagem mais escura
+        :param c: constante multiplicativa
+        :param y: constante exponencial
+        """
+        for i in range(self.num_linhas):
+            for j in range(self.num_colunas):
+                r = self.matriz[i][j]
+                # APLICA A TRANSFORMACAO
+                s = c * (r ** y)
+                # APLICA O VALOR AJUSTADO NA MATRIZ
+                self.matriz[i][j] = self._adjust_final_value(s)
 
 
 imagem = ImagePGMHelper("einstein.pgm")
@@ -77,5 +159,25 @@ print(imagem.L)
 print(imagem.num_linhas)
 print(imagem.num_colunas)
 imagem.show()
+
+# imagem.load("einstein.pgm")
+# imagem.thresholding_transformation(k=126)
+# imagem.show()
+
+# imagem.load("einstein.pgm")
+# imagem.negative_transformation()
+# imagem.show()
+
+# c_values = [40]
+# for c_value in c_values:
+#     imagem.load("einstein.pgm")
+#     imagem.log_transformation(c=c_value)
+#     imagem.show(name=f"log c={c_value}")
+
+gammas = [0.85, 1 , 1.1]
+for gamma in gammas:
+    imagem.load("einstein.pgm")
+    imagem.gamma_transformation(y=gamma)
+    imagem.show(name=f"gamma y={gamma}")
 
 
