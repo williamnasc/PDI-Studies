@@ -69,6 +69,26 @@ class ImagePGMHelper:
             self.matriz_original = matriz
             return matriz
 
+    def salvar_como_pgm(self, caminho_arquivo):
+        """Salva a imagem atual (matriz) no formato PGM P2."""
+        if self.matriz is None:
+            raise ValueError("Nenhuma matriz carregada para salvar.")
+        if caminho_arquivo is None:
+                    raise ValueError("Nome não definido para a imagem.")
+
+        altura = self.num_linhas
+        largura = self.num_colunas
+        max_valor = self.L - 1
+
+        with open(caminho_arquivo, 'w') as f:
+            f.write("P2\n")
+            f.write(f"{largura} {altura}\n")
+            f.write(f"{max_valor}\n")
+
+            for linha in self.matriz:
+                linha_str = ' '.join(str(min(max(int(p), 0), max_valor)) for p in linha)
+                f.write(linha_str + "\n")
+
     def show(self, name=None):
         plt.imshow(self.matriz, cmap='gray', vmin=0, vmax=self.L)
         plt.axis('off')  # remove eixos
@@ -203,7 +223,7 @@ class ImagePGMHelper:
         for i in range(len(histogram)):
             transition_table[i] = self._adjust_final_value((self.L-1) * cdf[i])
             pass
-        print(transition_table)
+        # print(transition_table)
 
         # MONTA O NOVO HISTOGRAMA A PARTIR DO MAPEAMENTO
         new_hitogram = [0]*len(histogram)
@@ -257,6 +277,7 @@ if __name__ == "__main__":
     imagem.equalize()
     imagem.show_hist()
     imagem.show()
+    imagem.salvar_como_pgm(caminho_arquivo=r"results\equalizada.pgm")
 
 
 
