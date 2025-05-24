@@ -17,6 +17,11 @@ class ImagePGMHelper:
         if caminho_arquivo is not None:
             self.load(caminho_arquivo)
 
+    @staticmethod
+    def map_array(arr, map1_start, map1_end, map2_start, map2_end):
+        """Mapeia os valores do array numpy do range [map1_start, map1_end] para o [map2_start, map2_end]"""
+        return map2_start + (arr - map1_start) * (map2_end - map2_start) / (map1_end - map1_start)
+
     def load(self, caminho_arquivo):
         with open(caminho_arquivo, 'rb') as f:
 
@@ -65,8 +70,8 @@ class ImagePGMHelper:
                 linha = dados[i * largura:(i + 1) * largura]
                 matriz.append(linha)
 
-            self.matriz = matriz
-            self.matriz_original = matriz
+            self.matriz = np.array(matriz)
+            self.matriz_original = np.array(matriz)
             return matriz
 
     def salvar_como_pgm(self, caminho_arquivo):
@@ -138,9 +143,13 @@ class ImagePGMHelper:
                 r = self.matriz[i][j]
                 # APLICA A TRANSFORMACAO
                 s = (math.log(1 + r)) * c
-                print(f"({i},{j}) r = {r} -> s = {s}")
+                # print(f"({i},{j}) r = {r} -> s = {s}")
                 # APLICA O VALOR AJUSTADO NA MATRIZ
-                self.matriz[i][j] = self._adjust_final_value(s)
+                # self.matriz[i][j] = self._adjust_final_value(s)
+                self.matriz[i][j] = s
+
+        s_max = (math.log(1 + (self.L-1))) * c
+        self.matriz = self.map_array(self.matriz, 0, s_max, 0, (self.L-1))
         pass
 
     def _adjust_final_value(self, s):
@@ -174,7 +183,11 @@ class ImagePGMHelper:
                 # APLICA A TRANSFORMACAO
                 s = c * (r ** y)
                 # APLICA O VALOR AJUSTADO NA MATRIZ
-                self.matriz[i][j] = self._adjust_final_value(s)
+                # self.matriz[i][j] = self._adjust_final_value(s)
+                self.matriz[i][j] = s
+
+        s_max = c * ((self.L - 1) ** y)
+        self.matriz = self.map_array(self.matriz, 0, s_max, 0, (self.L - 1))
 
     def get_histogram(self):
         """calcula e retorna uma lista com o histograma da imagem."""
@@ -259,25 +272,23 @@ if __name__ == "__main__":
     # imagem.negative_transformation()
     # imagem.show()
 
-    # c_values = [40]
-    # for c_value in c_values:
-    #     imagem.load("einstein.pgm")
-    #     imagem.log_transformation(c=c_value)
-    #     imagem.show(name=f"log c={c_value}")
+    c_values = [0.5, 1, 10]
+    for c_value in c_values:
+        imagem.load("relogio.pgm")
+        imagem.log_transformation(c=c_value)
+        imagem.show(name=f"log c={c_value}")
 
-    # gammas = [0.85, 1.1]
+    # gammas = [0.2, 0.5, 0.85, 1.1, 1.5, 2]
     # for gamma in gammas:
-    #     imagem.load("einstein.pgm")
+    #     imagem.load("relogio.pgm")
     #     imagem.gamma_transformation(y=gamma)
     #     imagem.show(name=f"gamma y={gamma}")
-    #     imagem.get_histogram()
+    # #     imagem.get_histogram()
 
-    imagem.get_histogram()
-    imagem.show_hist()
-    imagem.equalize()
-    imagem.show_hist()
-    imagem.show()
-    imagem.salvar_como_pgm(caminho_arquivo=r"results\equalizada.pgm")
-
-
+    # imagem.get_histogram()
+    # imagem.show_hist()
+    # imagem.equalize()
+    # imagem.show_hist()
+    # imagem.show()
+    # imagem.salvar_como_pgm(caminho_arquivo=r"results\equalizada.pgm")
 
