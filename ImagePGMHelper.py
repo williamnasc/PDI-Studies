@@ -340,7 +340,6 @@ class ImagePGMHelper:
         pass
 
 
-
 if __name__ == "__main__":
     # imagem = ImagePGMHelper("einstein.pgm")
     # imagem = ImagePGMHelper("relogio.pgm")

@@ -13,3 +13,8 @@ O arquivo main.py contem uma classe com métodos para:
 - Aplicar Equalização da Imagem.
 
 Para uma visualização rápida do que está implementado é possivel acesar [este link]([https://pages.github.com/](https://colab.research.google.com/drive/1mH7kdw1OXyvs3kRrxjnAmWH7j51me6lX?usp=sharing)).
+
+LINK NOTEBOOK ONLINE:
+
+https://colab.research.google.com/drive/1mH7kdw1OXyvs3kRrxjnAmWH7j51me6lX?usp=sharing
+
